@@ -5,162 +5,109 @@ Python script - conversion json for file to AWS compliance JSON standard
 
 Automatic conversion files imported from other supplier and convert it into AWS Route R53 JSON standard:
 
-# Example file before conversion:
+# Python script:
 
 ```
-{
-        "a": [
-            {
-                "active": true,
-                "name": "blog",
-                "target": "10.10.10.3",
-                "ttl": 14400
-            },
-            {
-                "active": true,
-                "name": "",
-                "target": "10.10.10.4",
-                "ttl": 600
-            },
-            {
-                "active": true,
-                "name": "ski",
-                "target": "10.10.10.5",
-                "ttl": 14400
-            }
-        ],
-        "aaaa": [],
-        "afsdb": [],
-        "cname": [
-            {
-                "active": true,
-                "name": "_12341234567890.www",
-                "target": 3334445555.com.",
-                "ttl": 14400
-            },
-            {
-                "active": true,
-                "name": "lp",
-                "target": "page.com.",
-                "ttl": 14400
-            },
-            {
-                "active": true,
-                "name": "_12324556678",
-                "target": "2233445566.com.",
-                "ttl": 14400
-            },
-            {
-                "active": true,
-                "name": "www",
-                "target": "www.my_domain.be.edgekey.net.",
-                "ttl": 300
-            }
-        ],
-        "dnskey": [],
-        "ds": [],
-        "hinfo": [],
-        "id": 384515,
-        "instance": "andre@my_domain.com",
-        "loc": [],
-        "mx": [
-            {
-                "active": true,
-                "name": "",
-                "priority": 10,
-                "target": "mailin01-domain.pwd.io.",
-                "ttl": 14400
-            },
-            {
-                "active": true,
-                "name": "",
-                "priority": 40,
-                "target": "mailin04-domain.pwd.io.",
-                "ttl": 14400
-            },
-            {
-                "active": true,
-                "name": "",
-                "priority": 30,
-                "target": "mailin03-domain.pwd.io.",
-                "ttl": 14400
-            },
-            {
-                "active": true,
-                "name": "",
-                "priority": 20,
-                "target": "mailin02-domain.pwd.io.",
-                "ttl": 14400
-            }
-        ],
-        "name": "my_domain.be",
-        "naptr": [],
-        "ns": [
-            {
-                "active": true,
-                "name": "",
-                "target": "a1-1345.tptp.net.",
-                "ttl": 172800
-            },
-            {
-                "active": true,
-                "name": "",
-                "target": "a9-12.tptp.net.",
-                "ttl": 172800
-            },
-            {
-                "active": true,
-                "name": "",
-                "target": "a13-44.tptp.net.",
-                "ttl": 172800
-            },
-            {
-                "active": true,
-                "name": "",
-                "target": "a2-3.tptp.net.",
-                "ttl": 172800
-            },
-            {
-                "active": true,
-                "name": "",
-                "target": "a22.tptp.net.",
-                "ttl": 172800
-            },
-            {
-                "active": true,
-                "name": "",
-                "target": "a1.tptp.net.",
-                "ttl": 172800
-            }
-        ],
-        "nsec3": [],
-        "nsec3param": [],
-        "ptr": [],
-        "publisher": "https://control.something.com",
-        "rp": [],
-        "rrsig": [],
-        "soa": {
-            "contact": "hostmaster.something.net.",
-            "expire": 604800,
-            "minimum": 14400,
-            "originserver": "something.net.",
-            "refresh": 28800,
-            "retry": 7200,
-            "serial": 201803333303,
-            "ttl": 14400
-        },
-        "spf": [],
-        "srv": [],
-        "sshfp": [],
-        "time": 1547736949,
-        "txt": [
-            {
-                "active": true,
-                "name": "",
-                "target": "3j33rjd",
-                "ttl": 300
-            }
-        ],
-        "version": 1.0
-}
+import json
+import sys
+import os
+
+# Folder with old json domain's files (before convertion)
+file_list = os.listdir("/Users/andrzejhochbaum/json/zones")
+for zone_name in file_list:
+    # Create file compliance with AWS json format
+    with open('/Users/andrzejhochbaum/json/zones/%s' %zone_name, 'r') as zone:
+      obj = json.load(zone)
+    # write ouput to the file:
+    file = open('/Users/andrzejhochbaum/json/export_aws/%s' %zone_name,  'a')
+    sys.stdout = file
+
+    # First fix block of file 
+    print "{"
+    print " "*2,'"Comment": "A new record set for the zone.",'
+    print " "*2,'"Changes": ['
+
+    # For each DNS records like A, CNAME and TXT perform convertion
+    records = ["a", "cname", "txt"]
+    for pp in records: 
+      if ("%s" %(pp)) in obj:
+          i = 0 
+          while i < len(obj["%s" %(pp)]):
+            print " "*4,'{'
+            print " "*6,'"Action": "CREATE",'
+            print " "*6,'"ResourceRecordSet": {'
+            if (obj["%s" %(pp)][i]['name'] == ""):
+              print " "*8,'"Name": ' + '"' + obj["%s" %(pp)][i]['name'] +  '%s' %zone_name  + '"' +' ,'
+            else:
+              print " "*8,'"Name": ' + '"' + obj["%s" %(pp)][i]['name'] +  '.%s' %zone_name  + '"' +' ,'
+            tp = pp.upper()
+            print " "*8,'"Type": "%s" ,' %(tp)
+            print " "*8,'"TTL": ',obj["%s" %(pp)][i]['ttl'],","
+            print " "*8,'"ResourceRecords": ['
+            print " "*10,'{'
+            if pp == 'txt':
+              print " "*12,'"Value": ' + '"\\"' + obj["%s" %(pp)][i]['target'] + '\\""'
+            else:
+              print " "*12,'"Value": ' + '"' + obj["%s" %(pp)][i]['target'] + '"'
+            print " "*10,'}'
+            print " "*8,']'
+            print " "*6,'}'
+            print " "*4,'},'
+            i += 1
+      else:
+          print "No data"
+
+    # Loop for Record MX
+    records = ["mx"]
+    for pp in records: 
+      if ("%s" %(pp)) in obj:
+          i = 0 
+          while i < len(obj["%s" %(pp)]):
+            countr = len(obj["%s" %(pp)])
+            lnr = countr - 1
+            if i == 0:
+                print " "*4,'{'
+                print " "*6,'"Action": "CREATE",'
+                print " "*6,'"ResourceRecordSet": {'
+                if (obj["%s" %(pp)][i]['name'] == ""):
+                  print " "*8,'"Name": ' + '"' + obj["%s" %(pp)][i]['name'] +  '%s' %zone_name  + '"' +' ,'
+                else:
+                  print " "*8,'"Name": ' + '"' + obj["%s" %(pp)][i]['name'] +  '.%s' %zone_name  + '"' +' ,'
+                tp = pp.upper()
+                print " "*8,'"Type": "%s" ,' %(tp)
+                print " "*8,'"TTL": ',obj["%s" %(pp)][i]['ttl'],","
+                print " "*8,'"ResourceRecords": ['
+                if countr == 1:
+                    print " "*10,'{'
+                    print " "*12,'"Value": ','"',obj["%s" %(pp)][i]['priority'],obj["%s" %(pp)][i]['target'],'"'
+                    print " "*10,'}'
+                else:
+                    print " "*10,'{'
+                    print " "*12,'"Value": ','"',obj["%s" %(pp)][i]['priority'],obj["%s" %(pp)][i]['target'],'"'
+                    print " "*10,'},'
+
+            elif i < lnr and i != 0:
+                print " "*10,'{'
+                print " "*12,'"Value": ','"',obj["%s" %(pp)][i]['priority'],obj["%s" %(pp)][i]['target'],'"'
+                print " "*10,'},'
+            else:
+                print " "*10,'{'
+                print " "*12,'"Value": ','"',obj["%s" %(pp)][i]['priority'],obj["%s" %(pp)][i]['target'],'"'
+                print " "*10,'}'
+
+            
+            i += 1
+      else:
+          print "No data"
+    
+    
+    # CLose block of file
+    print " "*8,']'
+    print " "*6,'}'
+    print " "*4,'}'
+  
+    print " "*2,']'
+    print "}"
+
+    file.close()
 ```
