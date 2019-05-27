@@ -1,11 +1,11 @@
 # python_script_convert_to_AWS_JSON
 Python script - conversion json for file to AWS compliance JSON standard
 
-# Project goal:
+**  Project goal:
 
 Automatic conversion files imported from other supplier and convert it into AWS Route R53 JSON standard:
 
-# AKAMI API JSON OUTPUT
+** AKAMI API JSON OUTPUT
 
 ```
 {
@@ -33,7 +33,7 @@ Automatic conversion files imported from other supplier and convert it into AWS 
 ```
 
 
-# AWS exmple JSON record example (after coversion)
+** AWS exmple JSON record example (after coversion)
 
 ```
 
