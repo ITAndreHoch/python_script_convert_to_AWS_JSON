@@ -5,6 +5,53 @@ Python script - conversion json for file to AWS compliance JSON standard
 
 Automatic conversion files imported from other supplier and convert it into AWS Route R53 JSON standard:
 
+# AKAMI API JSON OUTPUT
+
+```
+{
+  "token": "9218376e14c2797e0d06e8d2f918d45f",
+  "zone": {
+    "name": "example.com",
+    "a": [
+      {
+        "name": "www",
+        "ttl": 3600,
+        "active": true,
+        "target": "192.0.2.1"
+      }
+    ],
+    "aaaa": [
+      {
+        "name": "www",
+        "ttl": 3600,
+        "active": true,
+        "target": "2001:db8:0:0:0:0:0:1"
+      }
+    ]
+  }
+}
+```
+
+
+# AWS exmple JSON record example (after coversion)
+
+```
+
+{
+            "Comment": "CREATE/DELETE/UPSERT a record ",
+            "Changes": [{
+            "Action": "CREATE",
+                        "ResourceRecordSet": {
+                                    "Name": "a.example.com",
+                                    "Type": "A",
+                                    "TTL": 300,
+                                 "ResourceRecords": [{ "Value": "4.4.4.4"}]
+}}]
+}
+```
+
+
+
 # Python script:
 
 ```
